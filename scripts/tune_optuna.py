@@ -32,18 +32,19 @@ from torch.backends import cudnn
 def define_search_space(trial):
     """Return a dict of hyperparameters sampled from the search space."""
     return {
-        # Core hyperparams (most impactful)
-        "lr": trial.suggest_float("lr", 1e-5, 1e-3, log=True),
-        "d_model": trial.suggest_categorical("d_model", [128, 256, 512]),
+        # Model architecture
+        "lr": trial.suggest_float("lr", 1e-4, 1e-2, log=True),
+        "d_model": trial.suggest_categorical("d_model", [256, 512, 1024]),
         "n_memory": trial.suggest_categorical("n_memory", [32, 64, 128, 256]),
+        # Loss / attention hyperparams
         "temperature": trial.suggest_float("temperature", 0.01, 0.5, log=True),
         "lambd": trial.suggest_float("lambd", 1e-3, 0.1, log=True),
         "temp_param": trial.suggest_float("temp_param", 0.01, 0.2, log=True),
-        # Secondary hyperparams
+        # Training config
         "batch_size": trial.suggest_categorical("batch_size", [4, 8, 16, 32]),
-        "num_epochs": trial.suggest_int("num_epochs", 5, 20),
         "win_size": trial.suggest_categorical("win_size", [50, 100, 200]),
-        "anomaly_ratio": trial.suggest_float("anomaly_ratio", 0.5, 2.0),
+        # Threshold — affects precision/recall tradeoff (widen range for larger effect)
+        "anomaly_ratio": trial.suggest_float("anomaly_ratio", 1.0, 10.0),
     }
 
 
@@ -76,7 +77,8 @@ def run_trial(trial, config_base):
     print(f"\n{'='*60}")
     print(f"  TRIAL {trial.number} — Phase 1 (random memory)")
     print(f"  LR={hparams['lr']:.6f}  D_MODEL={hparams['d_model']}  N_MEM={hparams['n_memory']}")
-    print(f"  TEMP={hparams['temperature']}  LAMBDA={hparams['lambd']}")
+    print(f"  TEMP={hparams['temperature']}  LAMBDA={hparams['lambd']}  BATCH={hparams['batch_size']}")
+    print(f"  WIN={hparams['win_size']}  ANOMALY_RATIO={hparams['anomaly_ratio']:.4f}")
     print(f"{'='*60}\n")
 
     solver = Solver(vars(config))
@@ -96,7 +98,12 @@ def run_trial(trial, config_base):
     print(f"\n  TRIAL {trial.number} — Phase 4 (Test)")
     accuracy, precision, recall, f_score, auc_pr, rp, rr, rf = solver2.test()
 
-    return f_score
+    # Composite objective: weighted sum of three metrics
+    objective = 0.5 * f_score + 0.3 * auc_pr + 0.2 * rf
+
+    print(f"  TRIAL {trial.number} — F1={f_score:.4f}  AUC-PR={auc_pr:.4f}  Range-F={rf:.4f}  Obj={objective:.4f}")
+
+    return objective
 
 
 # ──────────────────────────────────────────────
@@ -147,7 +154,7 @@ def main():
         "lambd": 0.01,
         "temp_param": 0.05,
         "batch_size": 8,
-        "num_epochs": 10,
+        "num_epochs": 100,   # fixed — matches main.py default, not tuned
         "win_size": 100,
         "k": 5,
         "pretrained_model": None,
@@ -159,7 +166,7 @@ def main():
         "entropy_param": 0.05,
         "gamma": 0.01,
         "mode": "train",
-        "memory_initial": "False",   # MUST be string — solver compares with == "False"
+        "memory_initial": "False",   # solver does string comparison: == "False"
         "phase_type": None,
     }
 
@@ -203,8 +210,8 @@ def main():
             return
         values = trial.params.copy()
         values["trial_number"] = trial.number
-        values["f1_score"] = trial.value
-        values["best_f1_so_far"] = study.best_trial.value if study.best_trial else trial.value
+        values["objective"] = trial.value
+        values["best_objective_so_far"] = study.best_trial.value if study.best_trial else trial.value
         if csv_header is None:
             csv_header = list(values.keys())
             with open(args.results_csv, "w", newline="") as f:
@@ -224,7 +231,7 @@ def main():
 
     print(f"\n{'='*60}")
     print(f"  Best trial: {study.best_trial.number}")
-    print(f"  Best F1:    {study.best_trial.value:.4f}")
+    print(f"  Best objective (0.5*F1 + 0.3*AUC-PR + 0.2*Range-F): {study.best_trial.value:.4f}")
     print(f"  Params:")
     for k, v in study.best_trial.params.items():
         print(f"    {k}: {v}")

@@ -7,7 +7,7 @@
 #   ./train.sh
 #
 # Prerequisites:
-#   - Place your data in ./data/test_complex/
+#   - Place your data in ./data/
 #     (train.csv with 'y' column for labels)
 #   - Adjust hyperparameters below if needed
 # =============================================================
@@ -19,14 +19,14 @@ WIN_SIZE=100
 INPUT_C=33          # number of features/channels (f0-f33, excluding y)
 OUTPUT_C=33         # should match INPUT_C
 BATCH_SIZE=8
-NUM_EPOCHS=10
+NUM_EPOCHS=100      # sufficient training for convergence
 N_MEMORY=128
 D_MODEL=512
 LR=0.0001
 TEMP_PARAM=0.05
 LAMBDA=0.01
 TEMPERATURE=0.1
-ANOMALY_RATIO=1.0   # threshold percentile
+ANOMALY_RATIO=1.0   # threshold percentile (try 0.5~5.0 if needed)
 NUM_WORKERS=4
 DEVICE="cuda:0"
 MODEL_SAVE_PATH="checkpoints"

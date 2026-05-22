@@ -50,8 +50,8 @@ if __name__ == '__main__':
     parser.add_argument('--n_memory', type=int, default=128, help='number of memory items')
     parser.add_argument('--num_workers', type=int, default=4*torch.cuda.device_count())
     parser.add_argument('--d_model', type=int, default=512)
-    parser.add_argument('--temperature', type=int, default=0.1)
-    parser.add_argument('--memory_initial', type=str, default=False, help='whether it requires memory item embeddings. False: using random initialization, True: using customized initialization')
+    parser.add_argument('--temperature', type=float, default=0.1)
+    parser.add_argument('--memory_initial', type=str, default="False", help='whether it requires memory item embeddings. False: using random initialization, True: using customized initialization')
     parser.add_argument('--phase_type', type=str, default=None, help='training phase type (first_train, second_train, test)')
 
     config = parser.parse_args()
