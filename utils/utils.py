@@ -2,15 +2,16 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 import numpy as np
 from kmeans_pytorch import kmeans
 import time
 
-def to_var(x, volatile=False):
+
+def to_device(x):
+    """Move tensor to CUDA if available."""
     if torch.cuda.is_available():
-        x = x.cuda()
-    return Variable(x, volatile=volatile)
+        return x.cuda()
+    return x
 
 
 def mkdir(directory):

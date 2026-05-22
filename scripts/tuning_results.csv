@@ -1,0 +1,2 @@
+lr,d_model,n_memory,temperature,lambd,temp_param,batch_size,num_epochs,win_size,anomaly_ratio,trial_number,f1_score,best_f1_so_far
+5.6115164153345e-05,128,256,0.10502105436744279,0.02607024758370768,0.010636066512540286,4,7,100,0.9368437102970628,0,0.0,0.0

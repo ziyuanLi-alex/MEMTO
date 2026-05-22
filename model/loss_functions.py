@@ -4,6 +4,9 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 class ContrastiveLoss(nn.Module):
+    """Unused — kept for reference / ablation studies.
+    This loss is not called anywhere in the current codebase.
+    """
     def __init__(self, temp_param, eps=1e-12, reduce=True):
         super(ContrastiveLoss, self).__init__()
         self.temp_param = temp_param
@@ -22,7 +25,7 @@ class ContrastiveLoss(nn.Module):
         score = F.softmax(score, dim=1) # TxM
 
         return score
-    
+
     def forward(self, queries, items):
         '''
         anchor : query
@@ -67,14 +70,10 @@ class GatheringLoss(nn.Module):
         query : (NxL) x C or N x C -> T x C  (initial latent features)
         key : M x C     (memory items)
         '''
-        qs = query.size()
-        ks = key.size()
-
         score = torch.matmul(query, torch.t(key))   # Fea x Mem^T : (TXC) X (CXM) = TxM
-        score = F.softmax(score, dim=1) # TxM
-
+        score = F.softmax(score, dim=1)  # TxM
         return score
-    
+
     def forward(self, queries, items):
         '''
         queries : N x L x C
@@ -125,12 +124,8 @@ class NearestSim(nn.Module):
         query : (NxL) x C or N x C -> T x C  (initial latent features)
         key : M x C     (memory items)
         '''
-        qs = query.size()
-        ks = key.size()
-
         score = F.linear(query, key)   # Fea x Mem^T : (TXC) X (CXM) = TxM
-        score = F.softmax(score, dim=1) # TxM
-
+        score = F.softmax(score, dim=1)  # TxM
         return score
     
     def forward(self, queries, items):

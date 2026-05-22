@@ -6,16 +6,15 @@ import torch.nn.functional as F
 class PositionalEmbedding(nn.Module):
     def __init__(self, d_model, max_len=5000):
         super(PositionalEmbedding, self).__init__()
-        self.pe = torch.zeros((max_len, d_model), dtype=torch.float)
-        self.pe.requires_grad = False
 
+        pe = torch.zeros((max_len, d_model), dtype=torch.float)
         pos = torch.arange(0, max_len).float().unsqueeze(1)
         _2i = torch.arange(0, d_model, step=2).float()
 
-        self.pe[:, ::2] = torch.sin(pos / (10000 ** (_2i / d_model)))
-        self.pe[:, 1::2] = torch.cos(pos / (10000 ** (_2i / d_model)))
+        pe[:, ::2] = torch.sin(pos / (10000 ** (_2i / d_model)))
+        pe[:, 1::2] = torch.cos(pos / (10000 ** (_2i / d_model)))
 
-        self.pe = self.pe.unsqueeze(0)
+        self.register_buffer('pe', pe.unsqueeze(0))
 
     def forward(self, x):
         return self.pe[:, :x.size(1)]
@@ -48,9 +47,5 @@ class InputEmbedding(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x):
-        
-        try:
-            x = self.token_embedding(x) + self.pos_embedding(x).cuda()
-        except:
-            import pdb; pdb.set_trace()
+        x = self.token_embedding(x) + self.pos_embedding(x).to(x.device)
         return self.dropout(x)
