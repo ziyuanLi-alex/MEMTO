@@ -168,6 +168,7 @@ def main():
         "mode": "train",
         "memory_initial": "False",   # solver does string comparison: == "False"
         "phase_type": None,
+        "use_iqr": 1,
     }
 
     # Set up sampler and pruner

@@ -228,7 +228,7 @@ class SMDSegLoader(Dataset):
 
 
 class CustomCSVSegLoader(Dataset):
-    def __init__(self, data_path, win_size, step, mode="train", val_ratio=0.2):
+    def __init__(self, data_path, win_size, step, mode="train", val_ratio=0.2, use_iqr=True):
         self.mode = mode
         self.step = step
         self.win_size = win_size
@@ -242,6 +242,17 @@ class CustomCSVSegLoader(Dataset):
         feature_cols = [col for col in train_df.columns if col != "y"]
         train_features = np.nan_to_num(train_df[feature_cols].values.astype(np.float32))
         train_labels = train_df["y"].values.astype(np.int64)
+
+        # --- IQR Clipping (optional) ---
+        self.lower_bound = None
+        self.upper_bound = None
+        if use_iqr:
+            q1 = np.percentile(train_features, 25, axis=0)
+            q3 = np.percentile(train_features, 75, axis=0)
+            iqr = q3 - q1
+            self.lower_bound = q1 - 1.5 * iqr
+            self.upper_bound = q3 + 1.5 * iqr
+            train_features = np.clip(train_features, self.lower_bound, self.upper_bound)
 
         split_index = int(len(train_features) * (1 - val_ratio))
         split_index = max(self.win_size, min(split_index, len(train_features) - self.win_size))
@@ -263,6 +274,9 @@ class CustomCSVSegLoader(Dataset):
             test_path = os.path.join(data_path, mode + ".csv")
             test_df = pd.read_csv(test_path)
             data = np.nan_to_num(test_df[feature_cols].values.astype(np.float32))
+            # Apply same IQR clipping bounds as training data (if enabled)
+            if use_iqr and self.lower_bound is not None and self.upper_bound is not None:
+                data = np.clip(data, self.lower_bound, self.upper_bound)
             labels = np.zeros(len(data), dtype=np.int64)
             normal_only = False
         else:
@@ -302,7 +316,7 @@ class CustomCSVSegLoader(Dataset):
         return np.float32(self.data[start:end]), np.float32(self.labels[start:end])
 
 
-def get_loader_segment(data_path, batch_size, win_size=100, step=100, mode='train', dataset='KDD', val_ratio=0.15):
+def get_loader_segment(data_path, batch_size, win_size=100, step=100, mode='train', dataset='KDD', val_ratio=0.15, **kwargs):
     '''
     model : 'train' or 'test'
     '''
@@ -317,7 +331,8 @@ def get_loader_segment(data_path, batch_size, win_size=100, step=100, mode='trai
     elif (dataset == 'SWaT'):
         dataset = SWaTSegLoader(data_path, win_size, step, mode)
     elif (dataset == 'CUSTOM'):
-        dataset = CustomCSVSegLoader(data_path, win_size, step, mode, val_ratio=val_ratio)
+        use_iqr = kwargs.get('use_iqr', True)
+        dataset = CustomCSVSegLoader(data_path, win_size, step, mode, val_ratio=val_ratio, use_iqr=use_iqr)
 
     shuffle = False
     if mode == 'train':

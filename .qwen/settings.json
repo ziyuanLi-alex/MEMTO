@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/zyuanli/data_factory/**)",
+      "Bash(typst *)",
+      "Bash(python3 *)",
+      "Bash(python *)",
+      "Bash(fc-list *)",
+      "Bash(rm *)"
+    ]
+  },
+  "$version": 4
+}

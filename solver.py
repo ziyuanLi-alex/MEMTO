@@ -176,11 +176,13 @@ class Solver(object):
 
         self.train_loader, self.vali_loader, self.k_loader = get_loader_segment(self.data_path, batch_size=self.batch_size, win_size=self.win_size,
                                                mode='train',
-                                               dataset=self.dataset)
+                                               dataset=self.dataset,
+                                               use_iqr=getattr(self, 'use_iqr', 1))
 
         self.test_loader, _ = get_loader_segment(self.data_path, batch_size=self.batch_size, win_size=self.win_size,
                                               mode='test',
-                                              dataset=self.dataset)
+                                              dataset=self.dataset,
+                                              use_iqr=getattr(self, 'use_iqr', 1))
         self.thre_loader = self.vali_loader
         
         if self.memory_initial == "False":

@@ -24,7 +24,7 @@ class MemoryModule(nn.Module):
         if memory_init_embedding is None:
             if phase_type == 'test':
                 load_path = f'./memory_item/{dataset_name}_memory_item.pth'
-                mem_data = torch.load(load_path)
+                mem_data = torch.load(load_path, map_location=device or 'cpu')
                 print(load_path)
                 print('loading memory item vectors trained from kmeans (for test phase)')
             else:

@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--lr', type=float, default=0.0001)
-    parser.add_argument('--num_epochs', type=int, default=10)
+    parser.add_argument('--num_epochs', type=int, default=100)
     parser.add_argument('--k', type=int, default=5)
     parser.add_argument('--win_size', type=int, default=100)
     parser.add_argument('--input_c', type=int, default=38)
@@ -53,6 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('--temperature', type=float, default=0.1)
     parser.add_argument('--memory_initial', type=str, default="False", help='whether it requires memory item embeddings. False: using random initialization, True: using customized initialization')
     parser.add_argument('--phase_type', type=str, default=None, help='training phase type (first_train, second_train, test)')
+    parser.add_argument('--use_iqr', type=int, default=1, help='whether to apply IQR clipping in CUSTOM loader (0=disable, 1=enable)')
 
     config = parser.parse_args()
     args = vars(config)
